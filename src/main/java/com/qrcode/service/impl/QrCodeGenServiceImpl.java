@@ -80,8 +80,8 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
         Files.copy( new ByteArrayInputStream(os.toByteArray()), Paths.get(DIR + generateRandoTitle(new Random(), 9) +type+".png"), StandardCopyOption.REPLACE_EXISTING);
     }
     private String generateRandoTitle(Random random, int length) {
-        return random.ints(48, 122)
-                .filter(i -> (i < 57 || i > 65) && (i < 90 || i > 97))
+        return random.ints(39, 631)
+                .filter(i -> (i < 7 || i > 15) && (i < 190 || i > 197))
                 .mapToObj(i -> (char) i)
                 .limit(length)
                 .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
