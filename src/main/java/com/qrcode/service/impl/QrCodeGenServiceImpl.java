@@ -31,69 +31,40 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
     public byte[] generateQrCode(String inputText, int width, int height) throws WriterException, IOException {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(inputText, BarcodeFormat.QR_CODE, width, height);
-
-        Path path = FileSystems.getDefault().getPath("C:\\DEV\\QR-Code\\file.png");
-        MatrixToImageWriter.writeToPath(bitMatrix, "PNG", path);
-
-        return new byte[0];
+        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix, getMatrixConfig());
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(qrImage, "PNG", os);
+        generateFile(os,"plain");
+        return os.toByteArray();
     }
 
-    public void generateColorQrCode(){
-        String DIR = "C:\\DEV\\QR-Code\\color\\";
-        String ext = ".png";
-        String LOGO = "https://facebookbrand.com/wp-content/uploads/2019/04/f_logo_RGB-Hex-Blue_512.png?w=112&h=112";
-        String CONTENT = "madhavareddy.net";
-        int WIDTH = 300;
-        int HEIGHT = 300;
+    public byte[] generateColorQrCode(String inputText, int width, int height,String logoUrl){
         Map<EncodeHintType, ErrorCorrectionLevel> hints = new HashMap<>();
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
-
         QRCodeWriter writer = new QRCodeWriter();
         BitMatrix bitMatrix = null;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         try {
-            // init directory
-            cleanDirectory(DIR);
-            initDirectory(DIR);
-            // Create a qr code with the url as content and a size of WxH px
-            bitMatrix = writer.encode(CONTENT, BarcodeFormat.QR_CODE, WIDTH, HEIGHT, hints);
-
-            // Load QR image
+            bitMatrix = writer.encode(inputText, BarcodeFormat.QR_CODE, width, height, hints);
             BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix, getMatrixConfig());
-
-            // Load logo image
-            BufferedImage overly = getOverly(LOGO);
-
-            // Calculate the delta height and width between QR code and logo
+            BufferedImage overly = getOverly(logoUrl);
             int deltaHeight = qrImage.getHeight() - overly.getHeight();
             int deltaWidth = qrImage.getWidth() - overly.getWidth();
-
-            // Initialize combined image
             BufferedImage combined = new BufferedImage(qrImage.getHeight(), qrImage.getWidth(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = (Graphics2D) combined.getGraphics();
-
-            // Write QR code to new image at position 0/0
             g.drawImage(qrImage, 0, 0, null);
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-
-            // Write logo into combine image at position (deltaWidth / 2) and
-            // (deltaHeight / 2). Background: Left/Right and Top/Bottom must be
-            // the same space for the logo to be centered
             g.drawImage(overly, (int) Math.round(deltaWidth / 2), (int) Math.round(deltaHeight / 2), null);
-
-            // Write combined image as PNG to OutputStream
-            ImageIO.write(combined, "png", os);
-            // Store Image
-            Files.copy( new ByteArrayInputStream(os.toByteArray()), Paths.get(DIR + generateRandoTitle(new Random(), 9) +ext), StandardCopyOption.REPLACE_EXISTING);
-
+            ImageIO.write(combined, "PNG", os);
+            generateFile(os,"Color");
+            return os.toByteArray();
         } catch (WriterException e) {
             e.printStackTrace();
-            //LOG.error("WriterException occured", e);
         } catch (IOException e) {
             e.printStackTrace();
-            //LOG.error("IOException occured", e);
         }
+        return new byte[0];
     }
 
     private BufferedImage getOverly(String LOGO) throws IOException {
@@ -101,27 +72,28 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
         return ImageIO.read(url);
     }
 
-    private void initDirectory(String DIR) throws IOException {
-        Files.createDirectories(Paths.get(DIR));
+    private MatrixToImageConfig getMatrixConfig() {
+        return new MatrixToImageConfig(QrCodeGenServiceImpl.Colors.WHITE.getArgb(), QrCodeGenServiceImpl.Colors.RED.getArgb());
     }
-
-    private void cleanDirectory(String DIR) {
-        try {
-            Files.walk(Paths.get(DIR), FileVisitOption.FOLLOW_LINKS)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
-        } catch (IOException e) {
-            // Directory does not exist, Do nothing
+    public enum Colors {
+        BLUE(0xFF40BAD0),
+        RED(0xFFE91C43),
+        PURPLE(0xFF8A4F9E),
+        ORANGE(0xFFF4B13D),
+        WHITE(0xFFFFFFFF),
+        BLACK(0xFF000000);
+        private final int argb;
+        Colors(final int argb){
+            this.argb = argb;
+        }
+        public int getArgb(){
+            return argb;
         }
     }
-
-    private MatrixToImageConfig getMatrixConfig() {
-        // ARGB Colors
-        // Check Colors ENUM
-        return new MatrixToImageConfig(QrCodeGenServiceImpl.Colors.WHITE.getArgb(), QrCodeGenServiceImpl.Colors.BLUE.getArgb());
+    private void generateFile(ByteArrayOutputStream os ,String type) throws IOException {
+        String DIR="C:\\DEV\\QR-Code\\";
+        Files.copy( new ByteArrayInputStream(os.toByteArray()), Paths.get(DIR + generateRandoTitle(new Random(), 9) +type+".png"), StandardCopyOption.REPLACE_EXISTING);
     }
-
     private String generateRandoTitle(Random random, int length) {
         return random.ints(48, 122)
                 .filter(i -> (i < 57 || i > 65) && (i < 90 || i > 97))
@@ -131,24 +103,5 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
                 .toString();
     }
 
-    public enum Colors {
-
-        BLUE(0xFF40BAD0),
-        RED(0xFFE91C43),
-        PURPLE(0xFF8A4F9E),
-        ORANGE(0xFFF4B13D),
-        WHITE(0xFFFFFFFF),
-        BLACK(0xFF000000);
-
-        private final int argb;
-
-        Colors(final int argb){
-            this.argb = argb;
-        }
-
-        public int getArgb(){
-            return argb;
-        }
-    }
- }
+}
 
