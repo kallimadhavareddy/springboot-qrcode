@@ -16,11 +16,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.*;
-import java.util.Comparator;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -28,25 +28,28 @@ import java.util.Random;
 @Service
 public class QrCodeGenServiceImpl implements QrCodeGenService {
     @Override
-    public byte[] generateQrCode(String inputText, int width, int height) throws WriterException, IOException {
+    public byte[] generateQrCode(String inputText, int width, int height) {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        BitMatrix bitMatrix = qrCodeWriter.encode(inputText, BarcodeFormat.QR_CODE, width, height);
-        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix, getMatrixConfig());
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ImageIO.write(qrImage, "PNG", os);
-        generateFile(os,"plain");
-        return os.toByteArray();
+        try {
+            BitMatrix bitMatrix = qrCodeWriter.encode(inputText, BarcodeFormat.QR_CODE, width, height);
+            BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix, getMatrixConfig());
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(qrImage, "PNG", os);
+            generateFile(os,"plain");
+            return os.toByteArray();
+        }catch (WriterException|IOException e) {
+            e.printStackTrace();
+        }
+        return new byte[0];
     }
 
     public byte[] generateColorQrCode(String inputText, int width, int height,String logoUrl){
         Map<EncodeHintType, ErrorCorrectionLevel> hints = new HashMap<>();
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         QRCodeWriter writer = new QRCodeWriter();
-        BitMatrix bitMatrix = null;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-
         try {
-            bitMatrix = writer.encode(inputText, BarcodeFormat.QR_CODE, width, height, hints);
+            BitMatrix bitMatrix = writer.encode(inputText, BarcodeFormat.QR_CODE, width, height, hints);
             BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix, getMatrixConfig());
             BufferedImage overly = getOverly(logoUrl);
             int deltaHeight = qrImage.getHeight() - overly.getHeight();
@@ -59,9 +62,7 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
             ImageIO.write(combined, "PNG", os);
             generateFile(os,"Color");
             return os.toByteArray();
-        } catch (WriterException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (WriterException|IOException e) {
             e.printStackTrace();
         }
         return new byte[0];

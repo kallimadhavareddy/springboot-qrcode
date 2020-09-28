@@ -19,14 +19,8 @@ public class QrCodeResource {
 
     @GetMapping("qr/plain")
     public  Resource generatePlainQrCode(){
-        try {
              return new ByteArrayResource(qrCodeGenService.generateQrCode("http://madhavareddy.net", 300, 300), "test");
-        }catch(WriterException we){
-            we.printStackTrace();
-        }catch(IOException ie){
-            ie.printStackTrace();
-        }
-        return null;
+
     }
 
     @GetMapping("qr/color")
