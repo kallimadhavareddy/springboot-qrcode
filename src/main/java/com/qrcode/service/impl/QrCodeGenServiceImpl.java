@@ -72,9 +72,20 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
         URL url = new URL(LOGO);
         return ImageIO.read(url);
     }
-
     private MatrixToImageConfig getMatrixConfig() {
         return new MatrixToImageConfig(QrCodeGenServiceImpl.Colors.WHITE.getArgb(), QrCodeGenServiceImpl.Colors.RED.getArgb());
+    }
+    private void generateFile(ByteArrayOutputStream os ,String type) throws IOException {
+        String DIR="C:\\DEV\\QR-Code\\";
+        Files.copy( new ByteArrayInputStream(os.toByteArray()), Paths.get(DIR + generateRandoTitle(new Random(), 9) +type+".png"), StandardCopyOption.REPLACE_EXISTING);
+    }
+    private String generateRandoTitle(Random random, int length) {
+        return random.ints(48, 122)
+                .filter(i -> (i < 57 || i > 65) && (i < 90 || i > 97))
+                .mapToObj(i -> (char) i)
+                .limit(length)
+                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+                .toString();
     }
     public enum Colors {
         BLUE(0xFF40BAD0),
@@ -91,18 +102,5 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
             return argb;
         }
     }
-    private void generateFile(ByteArrayOutputStream os ,String type) throws IOException {
-        String DIR="C:\\DEV\\QR-Code\\";
-        Files.copy( new ByteArrayInputStream(os.toByteArray()), Paths.get(DIR + generateRandoTitle(new Random(), 9) +type+".png"), StandardCopyOption.REPLACE_EXISTING);
-    }
-    private String generateRandoTitle(Random random, int length) {
-        return random.ints(48, 122)
-                .filter(i -> (i < 57 || i > 65) && (i < 90 || i > 97))
-                .mapToObj(i -> (char) i)
-                .limit(length)
-                .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
-                .toString();
-    }
-
 }
 
