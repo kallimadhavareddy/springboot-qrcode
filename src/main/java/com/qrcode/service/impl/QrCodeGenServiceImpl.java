@@ -6,14 +6,18 @@ import com.google.zxing.client.j2se.MatrixToImageConfig;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.qrcode.service.QrCodeGenService;
+import javafx.scene.text.TextAlignment;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
+import javax.swing.text.StyleConstants;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -30,6 +34,7 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(qrImage, "PNG", os);
             generateFile(os,"plain");
+            generatePdf(os.toByteArray());
             return os.toByteArray();
         }catch (WriterException|IOException e) {
             e.printStackTrace();
@@ -66,6 +71,50 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
         public int getArgb(){
             return argb;
         }
+    }
+
+    public void generatePdf(byte[] qrCodeByte) {
+        Document document = new Document();
+        try {
+            String fileName = "C:\\DEV\\QR-Code\\sample.pdf";
+            PdfWriter.getInstance(document, new FileOutputStream(new File(fileName)));
+
+            document.open();
+            PdfPTable header = new PdfPTable(1);
+            try {
+                // set defaults
+                header.setWidths(new int[]{100});
+                header.setTotalWidth(525);
+                header.setLockedWidth(true);
+                header.getDefaultCell().setFixedHeight(65);
+                header.getDefaultCell().setBorder(Rectangle.BOTTOM);
+                header.getDefaultCell().setBorderColor(BaseColor.LIGHT_GRAY);
+
+                // add image
+                Image logo = Image.getInstance(qrCodeByte);
+                header.addCell(logo);
+
+
+                // write content
+                document.add(header);
+            } catch(DocumentException de) {
+                throw new ExceptionConverter(de);
+            } catch (MalformedURLException e) {
+                throw new ExceptionConverter(e);
+            } catch (IOException e) {
+                throw new ExceptionConverter(e);
+            }
+            //open
+
+            Image image = Image.getInstance(qrCodeByte);
+            document.add(image);
+            document.close();
+
+
+        }catch(DocumentException|IOException e){
+            e.printStackTrace();
+        }
+
     }
 }
 

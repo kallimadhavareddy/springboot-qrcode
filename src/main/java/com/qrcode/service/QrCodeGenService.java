@@ -5,5 +5,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 public interface QrCodeGenService {
-    public byte[] generateQrCode(String inputText,int width, int height);
+     byte[] generateQrCode(String inputText,int width, int height);
+     //void generatePdf(byte[] qrCodeByte);
 }
