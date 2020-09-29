@@ -1,28 +1,22 @@
 package com.qrcode.service.impl;
 
 import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageConfig;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.qrcode.service.QrCodeGenService;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -41,39 +35,10 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
             e.printStackTrace();
         }
         return new byte[0];
-    }
 
-    public byte[] generateColorQrCode(String inputText, int width, int height,String logoUrl){
-        Map<EncodeHintType, ErrorCorrectionLevel> hints = new HashMap<>();
-        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
-        QRCodeWriter writer = new QRCodeWriter();
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        try {
-            BitMatrix bitMatrix = writer.encode(inputText, BarcodeFormat.QR_CODE, width, height, hints);
-            BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix, getMatrixConfig());
-            BufferedImage overly = getOverly(logoUrl);
-            int deltaHeight = qrImage.getHeight() - overly.getHeight();
-            int deltaWidth = qrImage.getWidth() - overly.getWidth();
-            BufferedImage combined = new BufferedImage(qrImage.getHeight(), qrImage.getWidth(), BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = (Graphics2D) combined.getGraphics();
-            g.drawImage(qrImage, 0, 0, null);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-            g.drawImage(overly, (int) Math.round(deltaWidth / 2), (int) Math.round(deltaHeight / 2), null);
-            ImageIO.write(combined, "PNG", os);
-            generateFile(os,"Color");
-            return os.toByteArray();
-        } catch (WriterException|IOException e) {
-            e.printStackTrace();
-        }
-        return new byte[0];
-    }
-
-    private BufferedImage getOverly(String LOGO) throws IOException {
-        URL url = new URL(LOGO);
-        return ImageIO.read(url);
     }
     private MatrixToImageConfig getMatrixConfig() {
-        return new MatrixToImageConfig(QrCodeGenServiceImpl.Colors.WHITE.getArgb(), QrCodeGenServiceImpl.Colors.RED.getArgb());
+        return new MatrixToImageConfig(QrCodeGenServiceImpl.Colors.BLACK.getArgb(), QrCodeGenServiceImpl.Colors.WHITE.getArgb());
     }
     private void generateFile(ByteArrayOutputStream os ,String type) throws IOException {
         String DIR="C:\\DEV\\QR-Code\\";
