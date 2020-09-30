@@ -7,10 +7,12 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.qrcode.service.QrCodeGenService;
 import javafx.scene.text.TextAlignment;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -47,7 +49,7 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
     }
     private void generateFile(ByteArrayOutputStream os ,String type) throws IOException {
         String DIR="C:\\DEV\\QR-Code\\";
-        Files.copy( new ByteArrayInputStream(os.toByteArray()), Paths.get(DIR + generateRandoTitle(new Random(), 9) +type+".png"), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy( new ByteArrayInputStream(os.toByteArray()), Paths.get(DIR + RandomStringUtils.randomAlphabetic(10)+type+".png"), StandardCopyOption.REPLACE_EXISTING);
     }
     private String generateRandoTitle(Random random, int length) {
         return random.ints(39, 631)
@@ -76,25 +78,30 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
     public void generatePdf(byte[] qrCodeByte) {
         Document document = new Document();
         try {
-            String fileName = "C:\\DEV\\QR-Code\\sample.pdf";
+            String fileName = "C:\\DEV\\QR-Code\\"+RandomStringUtils.randomAlphabetic(10)+".pdf";
             PdfWriter.getInstance(document, new FileOutputStream(new File(fileName)));
 
             document.open();
-            PdfPTable header = new PdfPTable(1);
+            PdfPTable header = new PdfPTable(2);
             try {
                 // set defaults
-                header.setWidths(new int[]{100});
-                header.setTotalWidth(525);
+                header.setWidths(new int[]{60,100});
+                header.setTotalWidth(527);
                 header.setLockedWidth(true);
-                header.getDefaultCell().setFixedHeight(65);
+                header.getDefaultCell().setFixedHeight(60);
                 header.getDefaultCell().setBorder(Rectangle.BOTTOM);
                 header.getDefaultCell().setBorderColor(BaseColor.LIGHT_GRAY);
-
                 // add image
                 Image logo = Image.getInstance(qrCodeByte);
                 header.addCell(logo);
-
-
+                PdfPCell text = new PdfPCell();
+                text.setPaddingBottom(15);
+                text.setPaddingLeft(10);
+                text.setBorder(Rectangle.BOTTOM);
+                text.setBorderColor(BaseColor.LIGHT_GRAY);
+                text.addElement(new Phrase("iText PDF Header Goes Here", new Font(Font.FontFamily.HELVETICA, 12)));
+                text.addElement(new Phrase("http://madhavareddy.net", new Font(Font.FontFamily.HELVETICA, 8)));
+                header.addCell(text);
                 // write content
                 document.add(header);
             } catch(DocumentException de) {
@@ -105,15 +112,25 @@ public class QrCodeGenServiceImpl implements QrCodeGenService {
                 throw new ExceptionConverter(e);
             }
             //open
-
+/*
             Image image = Image.getInstance(qrCodeByte);
-            document.add(image);
+            document.add(image);*/
             document.close();
 
 
         }catch(DocumentException|IOException e){
             e.printStackTrace();
         }
+
+        /*
+            Document document = new Document();
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            PdfWriter.getInstance(document, stream);
+            document.open();
+            //build the PDF here
+            document.close();
+            return stream.toByteArray();
+         */
 
     }
 }
